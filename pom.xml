@@ -1,15 +1,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
+    <!--parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>7</version>
-    </parent>
-    <groupId>com.sparkjava</groupId>
+    </parent-->
+    <groupId>com.thechoppergroup</groupId>
     <artifactId>spark-core</artifactId>
     <packaging>bundle</packaging>
-    <version>2.3</version>
+    <version>2.3-chopper-SNAPSHOT</version>
     <name>Spark</name>
     <description>A Sinatra inspired java web framework</description>
     <url>http://www.sparkjava.com</url>
@@ -20,11 +20,11 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    <scm>
+    <!--scm>
         <connection>scm:git:git@github.com:perwendel/spark.git</connection>
         <developerConnection>scm:git:git@github.com:perwendel/spark.git</developerConnection>
         <url>scm:git:git@github.com:perwendel/spark.git</url>
-    </scm>
+    </scm-->
     <developers>
     </developers>
 
