@@ -17,6 +17,7 @@
 package spark.servlet;
 
 import java.io.IOException;
+import java.util.*;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -49,6 +50,17 @@ public class SparkFilter implements Filter {
     private static final Logger LOG = LoggerFactory.getLogger(SparkFilter.class);
 
     public static final String APPLICATION_CLASS_PARAM = "applicationClass";
+    private static final Map<String, String> CONTENT_TYPES = new HashMap<>();
+
+    static {
+        CONTENT_TYPES.put("svg", "image/svg+xml");
+        CONTENT_TYPES.put("css", "text/css");
+        CONTENT_TYPES.put("js", "application/x-javascript");
+        CONTENT_TYPES.put("png", "image/png");
+        CONTENT_TYPES.put("gif", "image/gif");
+        CONTENT_TYPES.put("jpg", "image/jpeg");
+        CONTENT_TYPES.put("jpeg", "image/jpeg");
+    }
 
     private String filterPath;
     private MatcherFilter matcherFilter;
@@ -114,6 +126,13 @@ public class SparkFilter implements Filter {
                 AbstractFileResolvingResource resource = staticResourceHandler.getResource(httpRequest);
                 if (resource != null && resource.isReadable()) {
                     IOUtils.copy(resource.getInputStream(), response.getOutputStream());
+                    String uri = httpRequest.getRequestURI();
+                    int dotLocation = uri.lastIndexOf(".");
+                    if(dotLocation == -1)
+                        return;
+                    String fileExtension = uri.substring(dotLocation + 1);
+                    if(CONTENT_TYPES.containsKey(fileExtension))
+                        response.setContentType(CONTENT_TYPES.get(fileExtension));
                     return;
                 }
             }
