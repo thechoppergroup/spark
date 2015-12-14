@@ -18,7 +18,9 @@ package spark.staticfiles;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -49,6 +51,18 @@ public class StaticFiles {
     private static boolean staticResourcesSet = false;
     private static boolean externalStaticResourcesSet = false;
 
+    private static final Map<String, String> CONTENT_TYPES = new HashMap<>();
+
+    static {
+        CONTENT_TYPES.put("svg", "image/svg+xml");
+        CONTENT_TYPES.put("css", "text/css");
+        CONTENT_TYPES.put("js", "application/x-javascript");
+        CONTENT_TYPES.put("png", "image/png");
+        CONTENT_TYPES.put("gif", "image/gif");
+        CONTENT_TYPES.put("jpg", "image/jpeg");
+        CONTENT_TYPES.put("jpeg", "image/jpeg");
+    }
+
     /**
      * @return true if consumed, false otherwise.
      */
@@ -58,12 +72,25 @@ public class StaticFiles {
             for (AbstractResourceHandler staticResourceHandler : staticResourceHandlers) {
                 AbstractFileResolvingResource resource = staticResourceHandler.getResource(httpRequest);
                 if (resource != null && resource.isReadable()) {
+                    setContentTypeFromFilename(servletResponse, httpRequest);
                     IOUtils.copy(resource.getInputStream(), servletResponse.getOutputStream());
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    public static void setContentTypeFromFilename(ServletResponse response, HttpServletRequest httpRequest) {
+        String uri = httpRequest.getRequestURI();
+        int dotLocation = uri.lastIndexOf(".");
+        if (dotLocation >= 0 && dotLocation < (uri.length() - 1)) {
+            String fileExtension = uri.substring(dotLocation + 1);
+            String contentType = CONTENT_TYPES.get(fileExtension);
+            if (contentType != null) {
+                response.setContentType(contentType);
+            }
+        }
     }
 
     /**
