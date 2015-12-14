@@ -125,20 +125,24 @@ public class SparkFilter implements Filter {
             for (AbstractResourceHandler staticResourceHandler : ServletStaticFiles.staticResourceHandlers()) {
                 AbstractFileResolvingResource resource = staticResourceHandler.getResource(httpRequest);
                 if (resource != null && resource.isReadable()) {
+                    setContentTypeFromFilename(response, httpRequest);
                     IOUtils.copy(resource.getInputStream(), response.getOutputStream());
-                    String uri = httpRequest.getRequestURI();
-                    int dotLocation = uri.lastIndexOf(".");
-                    if(dotLocation == -1)
-                        return;
-                    String fileExtension = uri.substring(dotLocation + 1);
-                    if(CONTENT_TYPES.containsKey(fileExtension))
-                        response.setContentType(CONTENT_TYPES.get(fileExtension));
                     return;
                 }
             }
         }
 
         matcherFilter.doFilter(requestWrapper, response, chain);
+    }
+
+    void setContentTypeFromFilename(ServletResponse response, HttpServletRequest httpRequest) {
+        String uri = httpRequest.getRequestURI();
+        int dotLocation = uri.lastIndexOf(".");
+        if (dotLocation >= 0 && dotLocation < (uri.length() - 1)) {
+            String fileExtension = uri.substring(dotLocation + 1);
+            String contentType = CONTENT_TYPES.get(fileExtension);
+            if(contentType != null) response.setContentType(contentType);
+        }
     }
 
     @Override
