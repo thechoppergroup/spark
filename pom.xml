@@ -9,7 +9,7 @@
     <groupId>com.thechoppergroup</groupId>
     <artifactId>spark-core</artifactId>
     <packaging>bundle</packaging>
-    <version>2.4-chopper-SNAPSHOT</version>
+    <version>2.5-chopper-SNAPSHOT</version>
     <name>Spark</name>
     <description>A Sinatra inspired java web framework</description>
     <url>http://www.sparkjava.com</url>
