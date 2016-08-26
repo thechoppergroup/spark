@@ -16,34 +16,21 @@
  */
 package spark.webserver;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import spark.Access;
-import spark.ExceptionHandlerImpl;
-import spark.ExceptionMapper;
-import spark.FilterImpl;
-import spark.HaltException;
-import spark.Request;
-import spark.RequestResponseFactory;
-import spark.Response;
-import spark.RouteImpl;
+import spark.*;
 import spark.route.HttpMethod;
 import spark.route.SimpleRouteMatcher;
 import spark.routematch.RouteMatch;
 import spark.staticfiles.StaticFiles;
 import spark.utils.GzipUtils;
 import spark.webserver.serialization.SerializerChain;
+
+import javax.servlet.Filter;
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
 
 /**
  * Filter for matching of filters and routes.
@@ -90,6 +77,11 @@ public class MatcherFilter implements Filter {
                          FilterChain chain) throws IOException, ServletException { // NOSONAR
         HttpServletRequest httpRequest = (HttpServletRequest) servletRequest; // NOSONAR
         HttpServletResponse httpResponse = (HttpServletResponse) servletResponse;
+
+        if (httpRequest.getRequestURI().matches(".*/websocket/.*")) {
+            chain.doFilter(servletRequest, servletResponse);
+            return;
+        }
 
         // handle static resources
         boolean consumedByStaticFile = StaticFiles.consume(httpRequest, httpResponse);
