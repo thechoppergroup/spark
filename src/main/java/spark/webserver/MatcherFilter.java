@@ -78,11 +78,6 @@ public class MatcherFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) servletRequest; // NOSONAR
         HttpServletResponse httpResponse = (HttpServletResponse) servletResponse;
 
-        if (httpRequest.getRequestURI().matches(".*/websocket/.*")) {
-            chain.doFilter(servletRequest, servletResponse);
-            return;
-        }
-
         // handle static resources
         boolean consumedByStaticFile = StaticFiles.consume(httpRequest, httpResponse);
 

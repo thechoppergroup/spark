@@ -16,25 +16,18 @@
  */
 package spark.servlet;
 
-import java.io.IOException;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.globalstate.ServletFlag;
 import spark.route.RouteMatcherFactory;
 import spark.staticfiles.StaticFiles;
 import spark.webserver.MatcherFilter;
+
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * Filter that can be configured to be used in a web.xml file.
@@ -88,6 +81,12 @@ public class SparkFilter implements Filter {
                                                                                               ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request; // NOSONAR
         HttpServletResponse httpResponse = (HttpServletResponse) response; // NOSONAR
+
+        if (httpRequest.getRequestURI().matches(".*/websocket/.*")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
 
         final String relativePath = FilterTools.getRelativePath(httpRequest, filterPath);
 
