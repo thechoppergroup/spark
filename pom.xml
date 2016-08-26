@@ -10,6 +10,9 @@
     <artifactId>spark-core</artifactId>
     <packaging>bundle</packaging>
     <version>2.3.6-chopper-SNAPSHOT</version>
+    <!-- version history: 2.4,
+                          2.5, 
+                          2.3.6 (to signify that we are actually forked from 2.3 and on custom version 6)-->
     <name>Spark</name>
     <description>A Sinatra inspired java web framework</description>
     <url>http://www.sparkjava.com</url>
