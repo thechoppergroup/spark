@@ -17,17 +17,31 @@
 package spark;
 
 
+import spark.utils.Wrapper;
+
 /**
  * RouteImpl is created from a path, acceptType and Route. This is encapsulate the information needed in the route
  * matcher in a single container.
  *
  * @author Per Wendel
  */
-public abstract class RouteImpl implements Route {
+public abstract class RouteImpl implements Route, Wrapper {
     static final String DEFAULT_ACCEPT_TYPE = "*/*";
 
     private String path;
     private String acceptType;
+    private Object delegate;
+
+    /**
+     * Prefix the path (used for {@link Service#path})
+     *
+     * @param prefix the prefix
+     * @return itself for easy chaining
+     */
+    public RouteImpl withPrefix(String prefix) {
+        this.path = prefix + this.path;
+        return this;
+    }
 
     /**
      * Wraps the route in RouteImpl
@@ -36,7 +50,7 @@ public abstract class RouteImpl implements Route {
      * @param route the route
      * @return the wrapped route
      */
-    static RouteImpl create(final String path, final Route route) {
+    public static RouteImpl create(final String path, final Route route) {
         return create(path, DEFAULT_ACCEPT_TYPE, route);
     }
 
@@ -48,11 +62,11 @@ public abstract class RouteImpl implements Route {
      * @param route      the route
      * @return the wrapped route
      */
-    static RouteImpl create(final String path, String acceptType, final Route route) {
+    public static RouteImpl create(final String path, String acceptType, final Route route) {
         if (acceptType == null) {
             acceptType = DEFAULT_ACCEPT_TYPE;
         }
-        return new RouteImpl(path, acceptType) {
+        return new RouteImpl(path, acceptType, route) {
             @Override
             public Object handle(Request request, Response response) throws Exception {
                 return route.handle(request, response);
@@ -81,6 +95,18 @@ public abstract class RouteImpl implements Route {
     }
 
     /**
+     * Constructor
+     *
+     * @param path       The route path which is used for matching. (e.g. /hello, users/:name)
+     * @param acceptType The accept type which is used for matching.
+     * @param route      The route used to create the route implementation
+     */
+    protected RouteImpl(String path, String acceptType, Object route) {
+        this(path, acceptType);
+        this.delegate = route;
+    }
+
+    /**
      * Invoked when a request is made on this route's corresponding path e.g. '/hello'
      *
      * @param request  The request object providing information about the HTTP request
@@ -99,11 +125,7 @@ public abstract class RouteImpl implements Route {
      * @throws java.lang.Exception when render fails
      */
     public Object render(Object element) throws Exception {
-        if (element != null) {
-            return element;
-        } else {
-            return null;
-        }
+        return element;
     }
 
     /**
@@ -116,8 +138,16 @@ public abstract class RouteImpl implements Route {
     /**
      * @return the path
      */
-    String getPath() {
+    public String getPath() {
         return this.path;
+    }
+
+    /**
+     * @return the route used to create the route implementation
+     */
+    @Override
+    public Object delegate() {
+        return this.delegate;
     }
 
 }

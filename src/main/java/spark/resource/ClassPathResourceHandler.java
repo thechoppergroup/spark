@@ -19,10 +19,10 @@ package spark.resource;
 
 import java.net.MalformedURLException;
 
-import org.eclipse.jetty.util.URIUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import spark.staticfiles.DirectoryTraversal;
 import spark.utils.Assert;
 
 /**
@@ -52,6 +52,7 @@ public class ClassPathResourceHandler extends AbstractResourceHandler {
      */
     public ClassPathResourceHandler(String baseResource, String welcomeFile) {
         Assert.notNull(baseResource);
+
         this.baseResource = baseResource;
         this.welcomeFile = welcomeFile;
     }
@@ -63,22 +64,30 @@ public class ClassPathResourceHandler extends AbstractResourceHandler {
         }
 
         try {
-            path = URIUtil.canonicalPath(path);
+            path = UriPath.canonical(path);
 
             final String addedPath = addPaths(baseResource, path);
 
             ClassPathResource resource = new ClassPathResource(addedPath);
 
-            if (resource.exists() && resource.getFile().isDirectory()) {
+            if (resource.exists() && path.endsWith("/")) {
                 if (welcomeFile != null) {
                     resource = new ClassPathResource(addPaths(resource.getPath(), welcomeFile));
                 } else {
-                    //  No welcome file configured, serve nothing since it's a directory
+                    // No welcome file configured, serve nothing since it's a directory
                     resource = null;
                 }
             }
 
-            return (resource != null && resource.exists()) ? resource : null;
+            if (resource != null && resource.exists()) {
+                DirectoryTraversal.protectAgainstInClassPath(resource.getPath(), baseResource);
+                return resource;
+            } else {
+                return null;
+            }
+
+        } catch (DirectoryTraversal.DirectoryTraversalDetection directoryTraversalDetection) {
+            throw directoryTraversalDetection;
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(e.getClass().getSimpleName() + " when trying to get resource. " + e.getMessage());
