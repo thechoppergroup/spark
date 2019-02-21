@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * A simple RESTful example showing howto create, get, update and delete book resources.
+ * A simple RESTful example showing how to create, get, update and delete book resources.
  *
  * @author Per Wendel
  */
@@ -35,7 +35,7 @@ public class Books {
     /**
      * Map holding the books
      */
-    public static Map<String, Book> books = new HashMap<String, Book>();
+    public static Map<String, Book> books = new HashMap<>();
 
     public static void main(String[] args) {
 

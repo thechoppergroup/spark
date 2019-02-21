@@ -17,7 +17,6 @@
 package spark.utils;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * Miscellaneous collection utility methods.
@@ -41,6 +40,17 @@ public abstract class CollectionUtils {
      */
     public static boolean isEmpty(Collection<?> collection) {
         return (collection == null || collection.isEmpty());
+    }
+
+    /**
+     * Return {@code true} if the supplied Collection is not {@code null} and not empty.
+     * Otherwise, return {@code false}.
+     *
+     * @param collection the Collection to check
+     * @return whether the given Collection is not empty
+     */
+    public static boolean isNotEmpty(Collection<?> collection) {
+        return !isEmpty(collection);
     }
 
 }

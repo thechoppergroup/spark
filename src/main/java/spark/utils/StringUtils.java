@@ -15,6 +15,8 @@
  */
 package spark.utils;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -50,6 +52,23 @@ public abstract class StringUtils {
     //---------------------------------------------------------------------
     // General convenience methods for working with Strings
     //---------------------------------------------------------------------
+
+    public static boolean isBlank(final CharSequence cs) {
+        int strLen;
+        if (cs == null || (strLen = cs.length()) == 0) {
+            return true;
+        }
+        for (int i = 0; i < strLen; i++) {
+            if (Character.isWhitespace(cs.charAt(i)) == false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isNotBlank(final CharSequence cs) {
+        return !isBlank(cs);
+    }
 
     /**
      * Check whether the given String is empty.
@@ -218,7 +237,7 @@ public abstract class StringUtils {
         }
 
         String[] pathArray = delimitedListToStringArray(pathToUse, FOLDER_SEPARATOR);
-        List<String> pathElements = new LinkedList<String>();
+        List<String> pathElements = new LinkedList<>();
         int tops = 0;
 
         for (int i = pathArray.length - 1; i >= 0; i--) {
@@ -297,7 +316,7 @@ public abstract class StringUtils {
         if (delimiter == null) {
             return new String[] {str};
         }
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         if ("".equals(delimiter)) {
             for (int i = 0; i < str.length(); i++) {
                 result.add(deleteAny(str.substring(i, i + 1), charsToDelete));
@@ -352,6 +371,38 @@ public abstract class StringUtils {
      */
     public static String collectionToDelimitedString(Collection<?> coll, String delim) {
         return collectionToDelimitedString(coll, delim, "", "");
+    }
+
+    public static String toString(byte[] bytes, String encoding) {
+        String str;
+
+        if (encoding != null && Charset.isSupported(encoding)) {
+            try {
+                str = new String(bytes, encoding);
+            } catch (UnsupportedEncodingException e) {
+                // Uses same func as Charset.isSupported (cannot happen)
+                str = new String(bytes);
+            }
+        } else {
+            str = new String(bytes);
+        }
+
+        return str;
+    }
+
+    public static String removeLeadingAndTrailingSlashesFrom(String string) {
+        
+        String trimmed = string;
+
+        if (trimmed.endsWith("/") || trimmed.endsWith("\\")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+
+        if (trimmed.startsWith("/")) {
+            trimmed = trimmed.substring(1);
+        }
+
+        return trimmed;
     }
 
 }

@@ -30,34 +30,52 @@ public class HaltException extends RuntimeException {
     private String body = null;
 
     HaltException() {
-        super();
+        super(null, null, false, false);
     }
 
     HaltException(int statusCode) {
+        this();
         this.statusCode = statusCode;
     }
 
     HaltException(String body) {
+        this();
         this.body = body;
     }
 
     HaltException(int statusCode, String body) {
+        this();
         this.statusCode = statusCode;
         this.body = body;
     }
 
     /**
      * @return the statusCode
+     * @deprecated replaced by {@link #statusCode()}
      */
     public int getStatusCode() {
         return statusCode;
     }
 
+    /**
+     * @return the statusCode
+     */
+    public int statusCode() {
+        return statusCode;
+    }
+
+    /**
+     * @return the body
+     * @deprecated replaced by {@link #body()}
+     */
+    public String getBody() {
+        return body;
+    }
 
     /**
      * @return the body
      */
-    public String getBody() {
+    public String body() {
         return body;
     }
 

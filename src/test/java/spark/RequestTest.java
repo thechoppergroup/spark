@@ -1,447 +1,455 @@
 package spark;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.Principal;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpUpgradeHandler;
-import javax.servlet.http.Part;
-
+import org.junit.Before;
 import org.junit.Test;
-
 import spark.routematch.RouteMatch;
 
-import static org.junit.Assert.assertEquals;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import java.util.*;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class RequestTest {
 
     private static final String THE_SERVLET_PATH = "/the/servlet/path";
     private static final String THE_CONTEXT_PATH = "/the/context/path";
 
+    HttpServletRequest servletRequest;
+    HttpSession httpSession;
+    Request request;
+
     RouteMatch match = new RouteMatch(null, "/hi", "/hi", "text/html");
+
+    @Before
+    public void setup() {
+
+        servletRequest = mock(HttpServletRequest.class);
+        httpSession = mock(HttpSession.class);
+
+        request = new Request(match, servletRequest);
+
+    }
 
     @Test
     public void queryParamShouldReturnsParametersFromQueryString() {
-        Map<String, String[]> params = new HashMap<String, String[]>();
-        params.put("name", new String[] {"Federico"});
-        HttpServletRequest servletRequest = new MockedHttpServletRequest(params);
-        Request request = new Request(match, servletRequest);
+
+        when(servletRequest.getParameter("name")).thenReturn("Federico");
+
         String name = request.queryParams("name");
         assertEquals("Invalid name in query string", "Federico", name);
     }
 
     @Test
+    public void queryParamOrDefault_shouldReturnQueryParam_whenQueryParamExists() {
+
+        when(servletRequest.getParameter("name")).thenReturn("Federico");
+
+        String name = request.queryParamOrDefault("name", "David");
+        assertEquals("Invalid name in query string", "Federico", name);
+    }
+
+    @Test
+    public void queryParamOrDefault_shouldReturnDefault_whenQueryParamIsNull() {
+
+        when(servletRequest.getParameter("name")).thenReturn(null);
+
+        String name = request.queryParamOrDefault("name", "David");
+        assertEquals("Invalid name in default value", "David", name);
+    }
+
+    @Test
     public void queryParamShouldBeParsedAsHashMap() {
-        Map<String, String[]> params = new HashMap<String, String[]>();
+        Map<String, String[]> params = new HashMap<>();
         params.put("user[name]", new String[] {"Federico"});
-        HttpServletRequest servletRequest = new MockedHttpServletRequest(params);
-        Request request = new Request(match, servletRequest);
+
+        when(servletRequest.getParameterMap()).thenReturn(params);
+
         String name = request.queryMap("user").value("name");
         assertEquals("Invalid name in query string", "Federico", name);
     }
 
     @Test
     public void shouldBeAbleToGetTheServletPath() {
-        HttpServletRequest servletRequest = new MockedHttpServletRequest(new HashMap<String, String[]>()) {
-            @Override
-            public String getServletPath() {
-                return THE_SERVLET_PATH;
-            }
-        };
+
+        when(servletRequest.getServletPath()).thenReturn(THE_SERVLET_PATH);
+
         Request request = new Request(match, servletRequest);
         assertEquals("Should have delegated getting the servlet path", THE_SERVLET_PATH, request.servletPath());
     }
 
     @Test
     public void shouldBeAbleToGetTheContextPath() {
-        HttpServletRequest servletRequest = new MockedHttpServletRequest(new HashMap<String, String[]>()) {
-            @Override
-            public String getContextPath() {
-                return THE_CONTEXT_PATH;
-            }
-        };
+
+        when(servletRequest.getContextPath()).thenReturn(THE_CONTEXT_PATH);
+
         Request request = new Request(match, servletRequest);
         assertEquals("Should have delegated getting the context path", THE_CONTEXT_PATH, request.contextPath());
     }
 
-    public static class MockedHttpServletRequest implements HttpServletRequest {
-        private Map<String, String[]> params;
-
-        public MockedHttpServletRequest(Map<String, String[]> params) {
-            this.params = params;
-        }
+    @Test
+    public void testSessionNoParams_whenSessionIsNull() {
 
-        @Override
-        public String getAuthType() {
-            return null;
-        }
+        when(servletRequest.getSession()).thenReturn(httpSession);
 
-        @Override
-        public String getContextPath() {
-            return null;
-        }
+        assertEquals("A Session with an HTTPSession from the Request should have been created",
+                httpSession, request.session().raw());
+    }
 
-        @Override
-        public Cookie[] getCookies() {
-            return null;
-        }
+    @Test
+    public void testSession_whenCreateIsTrue() {
 
-        @Override
-        public long getDateHeader(String name) {
-            return 0;
-        }
+        when(servletRequest.getSession(true)).thenReturn(httpSession);
 
-        @Override
-        public String getHeader(String name) {
-            return null;
-        }
+        assertEquals("A Session with an HTTPSession from the Request should have been created because create parameter " +
+                        "was set to true",
+                httpSession, request.session(true).raw());
 
-        @Override
-        public Enumeration<String> getHeaderNames() {
-            return null;
-        }
+    }
 
-        @Override
-        public Enumeration<String> getHeaders(String name) {
-            return null;
-        }
+    @Test
+    public void testSession_whenCreateIsFalse() {
 
-        @Override
-        public int getIntHeader(String name) {
-            return 0;
-        }
+        when(servletRequest.getSession(true)).thenReturn(httpSession);
 
-        @Override
-        public String getMethod() {
-            return null;
-        }
+        assertEquals("A Session should not have been created because create parameter was set to false",
+                null, request.session(false));
 
-        @Override
-        public String getPathInfo() {
-            return null;
-        }
+    }
 
-        @Override
-        public String getPathTranslated() {
-            return null;
-        }
+    @Test
+    public void testSessionNpParams_afterSessionInvalidate() {
+        when(servletRequest.getSession()).thenReturn(httpSession);
 
-        @Override
-        public String getQueryString() {
-            return null;
-        }
+        Session session = request.session();
+        session.invalidate();
+        request.session();
 
-        @Override
-        public String getRemoteUser() {
-            return null;
-        }
+        verify(servletRequest, times(2)).getSession();
+    }
 
-        @Override
-        public String getRequestURI() {
-            return null;
-        }
+    @Test
+    public void testSession_whenCreateIsTrue_afterSessionInvalidate() {
+        when(servletRequest.getSession(true)).thenReturn(httpSession);
 
-        @Override
-        public StringBuffer getRequestURL() {
-            return null;
-        }
+        Session session = request.session(true);
+        session.invalidate();
+        request.session(true);
 
-        @Override
-        public String getRequestedSessionId() {
-            return null;
-        }
+        verify(servletRequest, times(2)).getSession(true);
+    }
 
-        @Override
-        public String getServletPath() {
-            return null;
-        }
+    @Test
+    public void testSession_whenCreateIsFalse_afterSessionInvalidate() {
+        when(servletRequest.getSession()).thenReturn(httpSession);
+        when(servletRequest.getSession(false)).thenReturn(null);
 
-        @Override
-        public HttpSession getSession() {
-            return null;
-        }
+        Session session = request.session();
+        session.invalidate();
+        request.session(false);
 
-        @Override
-        public HttpSession getSession(boolean create) {
-            return null;
-        }
+        verify(servletRequest, times(1)).getSession(false);
+    }
 
-        @Override
-        public Principal getUserPrincipal() {
-            return null;
-        }
+    @Test
+    public void testSession_2times() {
+        when(servletRequest.getSession(true)).thenReturn(httpSession);
 
-        @Override
-        public boolean isRequestedSessionIdFromCookie() {
-            return false;
-        }
+        Session session = request.session(true);
+        session = request.session(true);
 
-        @Override
-        public boolean isRequestedSessionIdFromURL() {
-            return false;
-        }
+        assertNotNull(session);
+        verify(servletRequest, times(1)).getSession(true);
+    }
 
-        @Override
-        @Deprecated
-        public boolean isRequestedSessionIdFromUrl() {
-            return false;
-        }
+    @Test
+    public void testCookies_whenCookiesArePresent() {
 
-        @Override
-        public boolean isRequestedSessionIdValid() {
-            return false;
-        }
+        Collection<Cookie> cookies = new ArrayList<>();
+        cookies.add(new Cookie("cookie1", "cookie1value"));
+        cookies.add(new Cookie("cookie2", "cookie2value"));
 
-        @Override
-        public boolean isUserInRole(String role) {
-            return false;
+        Map<String, String> expected = new HashMap<>();
+        for(Cookie cookie : cookies) {
+            expected.put(cookie.getName(), cookie.getValue());
         }
 
-        @Override
-        public Object getAttribute(String name) {
-            return null;
-        }
+        Cookie[] cookieArray = cookies.toArray(new Cookie[cookies.size()]);
 
-        @Override
-        public Enumeration<String> getAttributeNames() {
-            return null;
-        }
+        when(servletRequest.getCookies()).thenReturn(cookieArray);
 
-        @Override
-        public String getCharacterEncoding() {
-            return null;
-        }
+        assertTrue("The count of cookies returned should be the same as those in the request",
+                request.cookies().size() == 2);
 
-        @Override
-        public int getContentLength() {
-            return 0;
-        }
+        assertEquals("A Map of Cookies should have been returned because they exist", expected, request.cookies());
 
-        @Override
-        public String getContentType() {
-            return null;
-        }
+    }
 
-        @Override
-        public ServletInputStream getInputStream() throws IOException {
-            return null;
-        }
+    @Test
+    public void testCookies_whenCookiesAreNotPresent() {
 
-        @Override
-        public String getLocalAddr() {
-            return null;
-        }
+        when(servletRequest.getCookies()).thenReturn(null);
 
-        @Override
-        public String getLocalName() {
-            return null;
-        }
+        assertNotNull("A Map of Cookies should have been instantiated even if cookies are not present in the request",
+                request.cookies());
 
-        @Override
-        public int getLocalPort() {
-            return 0;
-        }
+        assertTrue("The Map of cookies should be empty because cookies are not present in the request",
+                request.cookies().size() == 0);
 
-        @Override
-        public Locale getLocale() {
-            return null;
-        }
+    }
 
-        @Override
-        public Enumeration<Locale> getLocales() {
-            return null;
-        }
+    @Test
+    public void testCookie_whenCookiesArePresent() {
 
-        @Override
-        public String getParameter(String name) {
-            return this.params.get(name)[0];
-        }
+        final String cookieKey = "cookie1";
+        final String cookieValue = "cookie1value";
 
-        @Override
-        public Map<String, String[]> getParameterMap() {
-            return this.params;
-        }
+        Collection<Cookie> cookies = new ArrayList<>();
+        cookies.add(new Cookie(cookieKey, cookieValue));
 
-        @Override
-        public Enumeration<String> getParameterNames() {
-            return null;
-        }
+        Cookie[] cookieArray = cookies.toArray(new Cookie[cookies.size()]);
+        when(servletRequest.getCookies()).thenReturn(cookieArray);
 
-        @Override
-        public String[] getParameterValues(String name) {
-            return null;
-        }
+        assertNotNull("A value for the key provided should exist because a cookie with the same key is present",
+                request.cookie(cookieKey));
 
-        @Override
-        public String getProtocol() {
-            return null;
-        }
+        assertEquals("The correct value for the cookie key supplied should be returned",
+                cookieValue, request.cookie(cookieKey));
 
-        @Override
-        public BufferedReader getReader() throws IOException {
-            return null;
-        }
+    }
 
-        @Override
-        @Deprecated
-        public String getRealPath(String path) {
-            return null;
-        }
+    @Test
+    public void testCookie_whenCookiesAreNotPresent() {
 
-        @Override
-        public String getRemoteAddr() {
-            return null;
-        }
+        final String cookieKey = "nonExistentCookie";
 
-        @Override
-        public String getRemoteHost() {
-            return null;
-        }
+        when(servletRequest.getCookies()).thenReturn(null);
 
-        @Override
-        public int getRemotePort() {
-            return 0;
-        }
+        assertNull("A null value should have been returned because the cookie with that key does not exist",
+                request.cookie(cookieKey));
 
-        @Override
-        public RequestDispatcher getRequestDispatcher(String path) {
-            return null;
-        }
+    }
 
-        @Override
-        public String getScheme() {
-            return null;
-        }
+    @Test
+    public void testRequestMethod() {
 
-        @Override
-        public String getServerName() {
-            return null;
-        }
+        final String requestMethod = "GET";
 
-        @Override
-        public int getServerPort() {
-            return 0;
-        }
+        when(servletRequest.getMethod()).thenReturn(requestMethod);
 
-        @Override
-        public boolean isSecure() {
-            return false;
-        }
+        assertEquals("The request method of the underlying servlet request should be returned",
+                requestMethod, request.requestMethod());
 
-        @Override
-        public void removeAttribute(String name) {
-            // do nothing
-        }
+    }
 
-        @Override
-        public void setAttribute(String name, Object o) {
-            // do nothing
-        }
+    @Test
+    public void testScheme() {
 
-        @Override
-        public void setCharacterEncoding(String env) throws UnsupportedEncodingException {
-            // do nothing
-        }
+        final String scheme = "http";
 
-        @Override
-        public ServletContext getServletContext() {
-            return null;
-        }
+        when(servletRequest.getScheme()).thenReturn(scheme);
 
-        @Override
-        public AsyncContext startAsync() throws IllegalStateException {
-            return null;
-        }
+        assertEquals("The scheme of the underlying servlet request should be returned",
+                scheme, request.scheme());
 
-        @Override
-        public AsyncContext startAsync(ServletRequest servletRequest,
-                                       ServletResponse servletResponse) throws IllegalStateException {
-            return null;
-        }
+    }
 
-        @Override
-        public boolean isAsyncStarted() {
-            return false;
-        }
+    @Test
+    public void testHost() {
 
-        @Override
-        public boolean isAsyncSupported() {
-            return false;
-        }
+        final String host = "www.google.com";
 
-        @Override
-        public AsyncContext getAsyncContext() {
-            return null;
-        }
+        when(servletRequest.getHeader("host")).thenReturn(host);
 
-        @Override
-        public DispatcherType getDispatcherType() {
-            return null;
-        }
+        assertEquals("The value of the host header of the underlying servlet request should be returned",
+                host, request.host());
 
-        @Override
-        public boolean authenticate(HttpServletResponse response)
-                throws IOException, ServletException {
-            return false;
-        }
+    }
 
-        @Override
-        public void login(String username, String password)
-                throws ServletException {
-            // do nothing
-        }
+    @Test
+    public void testUserAgent() {
 
-        @Override
-        public void logout() throws ServletException {
-            // do nothing
-        }
+        final String userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36";
 
-        @Override
-        public Collection<Part> getParts() throws IOException, ServletException {
-            return null;
-        }
+        when(servletRequest.getHeader("user-agent")).thenReturn(userAgent);
 
-        @Override
-        public Part getPart(String name) throws IOException, ServletException {
-            return null;
-        }
+        assertEquals("The value of the user agent header of the underlying servlet request should be returned",
+                userAgent, request.userAgent());
 
-        @Override
-        public long getContentLengthLong() {
-            // TODO Auto-generated method stub
-            return 0;
-        }
+    }
 
-        @Override
-        public String changeSessionId() {
-            // TODO Auto-generated method stub
-            return null;
-        }
+    @Test
+    public void testPort() {
 
-        @Override
-        public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass)
-                throws IOException, ServletException {
-            // TODO Auto-generated method stub
-            return null;
-        }
+        final int port = 80;
+
+        when(servletRequest.getServerPort()).thenReturn(80);
+
+        assertEquals("The server port of the the underlying servlet request should be returned",
+                port, request.port());
+
+    }
+
+    @Test
+    public void testPathInfo() {
+
+        final String pathInfo = "/path/to/resource";
+
+        when(servletRequest.getPathInfo()).thenReturn(pathInfo);
+
+        assertEquals("The path info of the underlying servlet request should be returned",
+                pathInfo, request.pathInfo());
+
+    }
+
+    @Test
+    public void testServletPath() {
+
+        final String servletPath = "/api";
+
+        when(servletRequest.getServletPath()).thenReturn(servletPath);
+
+        assertEquals("The servlet path of the underlying servlet request should be returned",
+                servletPath, request.servletPath());
+
+    }
+
+    @Test
+    public void testContextPath() {
+
+        final String contextPath = "/my-app";
+
+        when(servletRequest.getContextPath()).thenReturn(contextPath);
+
+        assertEquals("The context path of the underlying servlet request should be returned",
+                contextPath, request.contextPath());
+
+    }
+
+    @Test
+    public void testUrl() {
+
+        final String url = "http://www.myapp.com/myapp/a";
+
+        when(servletRequest.getRequestURL()).thenReturn(new StringBuffer(url));
+
+        assertEquals("The request url of the underlying servlet request should be returned",
+                url, request.url());
+
+    }
+
+    @Test
+    public void testContentType() {
+
+        final String contentType = "image/jpeg";
+
+        when(servletRequest.getContentType()).thenReturn(contentType);
+
+        assertEquals("The content type of the underlying servlet request should be returned",
+                contentType, request.contentType());
+
+    }
+
+    @Test
+    public void testIp() {
+
+        final String ip = "216.58.197.106:80";
+
+        when(servletRequest.getRemoteAddr()).thenReturn(ip);
+
+        assertEquals("The remote IP of the underlying servlet request should be returned",
+                ip, request.ip());
+
+    }
+
+    @Test
+    public void testContentLength() {
+
+        final int contentLength = 500;
+
+        when(servletRequest.getContentLength()).thenReturn(contentLength);
+
+        assertEquals("The content length the underlying servlet request should be returned",
+                contentLength, request.contentLength());
+
+    }
+
+    @Test
+    public void testHeaders() {
+
+        final String headerKey = "host";
+        final String host = "www.google.com";
+
+        when(servletRequest.getHeader(headerKey)).thenReturn(host);
+
+        assertEquals("The value of the header specified should be returned",
+                host, request.headers(headerKey));
+
+    }
+
+    @Test
+    public void testQueryParamsValues_whenParamExists() {
+
+        final String[] paramValues = {"foo", "bar"};
+
+        when(servletRequest.getParameterValues("id")).thenReturn(paramValues);
+
+        assertArrayEquals("An array of Strings for a parameter with multiple values should be returned",
+                paramValues, request.queryParamsValues("id"));
+
+    }
+
+    @Test
+    public void testQueryParamsValues_whenParamDoesNotExists() {
+
+        when(servletRequest.getParameterValues("id")).thenReturn(null);
+
+        assertNull("Null should be returned because the parameter specified does not exist in the request",
+                request.queryParamsValues("id"));
+
+    }
+
+    @Test
+    public void testQueryParams() {
+
+        Map<String, String[]> params = new HashMap<>();
+        params.put("sort", new String[]{"asc"});
+        params.put("items", new String[]{"10"});
+
+        when(servletRequest.getParameterMap()).thenReturn(params);
+
+        Set<String> result = request.queryParams();
+
+        assertArrayEquals("Should return the query parameter names", params.keySet().toArray(), result.toArray());
+
+    }
+
+    @Test
+    public void testURI() {
+
+        final String requestURI = "http://localhost:8080/myapp/";
+
+        when(servletRequest.getRequestURI()).thenReturn(requestURI);
+
+        assertEquals("The request URI should be returned",
+                requestURI, request.uri());
+
+    }
+
+    @Test
+    public void testProtocol() {
+
+        final String protocol = "HTTP/1.1";
+
+        when(servletRequest.getProtocol()).thenReturn(protocol);
+
+        assertEquals("The underlying request protocol should be returned",
+                protocol, request.protocol());
 
     }
 }
