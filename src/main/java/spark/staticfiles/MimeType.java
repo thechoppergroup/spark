@@ -56,6 +56,7 @@ public class MimeType {
         mappings.put("jpg", "image/jpeg");
         mappings.put("jpeg", "image/jpeg");
         mappings.put("js", "application/javascript");
+        mappings.put("mjs", "application/javascript");
         mappings.put("json", "application/json");
         mappings.put("midi", "audio/x-midi");
         mappings.put("mp3", "audio/mpeg");
