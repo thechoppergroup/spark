@@ -16,8 +16,8 @@
  */
 package spark.http.matching;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import spark.CustomErrorPages;
 import spark.ExceptionHandlerImpl;
@@ -42,6 +42,7 @@ final class GeneralError {
                        ExceptionMapper exceptionMapper,
                        Exception e) {
 
+        @SuppressWarnings("rawtypes")
         ExceptionHandlerImpl handler = exceptionMapper.getHandler(e);
 
         if (handler != null) {

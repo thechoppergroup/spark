@@ -1,31 +1,30 @@
 package spark;
 
 import org.junit.Test;
-import org.powermock.reflect.Whitebox;
+import java.lang.reflect.Field;
 
 import static org.junit.Assert.assertEquals;
 
 public class ExceptionMapperTest {
 
-
     @Test
-    public void testGetInstance_whenDefaultInstanceIsNull() {
-        //given
-        ExceptionMapper exceptionMapper = null;
-        Whitebox.setInternalState(ExceptionMapper.class, "servletInstance", exceptionMapper);
+    public void testGetInstance_whenDefaultInstanceIsNull() throws Exception {
+        Field instanceField = ExceptionMapper.class.getDeclaredField("servletInstance");
+        instanceField.setAccessible(true);
+        instanceField.set(null, null);
 
-        //then
-        exceptionMapper = ExceptionMapper.getServletInstance();
-        assertEquals("Should be equals because ExceptionMapper is a singleton", Whitebox.getInternalState(ExceptionMapper.class, "servletInstance"), exceptionMapper);
+        ExceptionMapper exceptionMapper = ExceptionMapper.getServletInstance();
+        assertEquals("Should be equal because ExceptionMapper is a singleton", instanceField.get(null), exceptionMapper);
     }
 
     @Test
-    public void testGetInstance_whenDefaultInstanceIsNotNull() {
-        //given
-        ExceptionMapper.getServletInstance(); //initialize Singleton
+    public void testGetInstance_whenDefaultInstanceIsNotNull() throws Exception {
+        Field instanceField = ExceptionMapper.class.getDeclaredField("servletInstance");
+        instanceField.setAccessible(true);
 
-        //then
+        ExceptionMapper.getServletInstance(); // initialize singleton
+
         ExceptionMapper exceptionMapper = ExceptionMapper.getServletInstance();
-        assertEquals("Should be equals because ExceptionMapper is a singleton", Whitebox.getInternalState(ExceptionMapper.class, "servletInstance"), exceptionMapper);
+        assertEquals("Should be equal because ExceptionMapper is a singleton", instanceField.get(null), exceptionMapper);
     }
 }

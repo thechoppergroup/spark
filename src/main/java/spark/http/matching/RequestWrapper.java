@@ -19,7 +19,7 @@ package spark.http.matching;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import spark.Access;
 import spark.QueryParamsMap;
@@ -47,6 +47,7 @@ final class RequestWrapper extends Request {
         return delegate;
     }
 
+    @Override
     public void changeMatch(RouteMatch match) {
         Access.changeMatch(delegate, match);
     }

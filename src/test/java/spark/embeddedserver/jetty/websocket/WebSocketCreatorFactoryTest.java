@@ -1,15 +1,15 @@
 package spark.embeddedserver.jetty.websocket;
 
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
-import org.junit.Test;
-
-import spark.embeddedserver.jetty.websocket.WebSocketCreatorFactory.SparkWebSocketCreator;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import org.eclipse.jetty.websocket.api.WebSocketAdapter;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.core.server.WebSocketCreator;
+import org.junit.Test;
+
+import spark.embeddedserver.jetty.websocket.WebSocketCreatorFactory.SparkWebSocketCreator;
 
 public class WebSocketCreatorFactoryTest {
 
@@ -56,11 +56,13 @@ public class WebSocketCreatorFactoryTest {
 
     @WebSocket
     static class AnnotatedHandler {
-
+        public AnnotatedHandler() {
+        }
     }
 
     static class ListenerHandler extends WebSocketAdapter {
-
+        public ListenerHandler() {
+        }
     }
 
     static class InvalidHandler {
